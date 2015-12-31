@@ -41,6 +41,12 @@ function createSyncedHistoryAndStore(createHistory) {
   return { history, store, unsubscribe }
 }
 
+function supportsGoWithoutReloadUsingHash() {
+  if (!global.navigator) return true
+  let ua = navigator.userAgent
+  return ua.indexOf('Firefox') === -1
+}
+
 const defaultReset = () => {}
 
 const { push, replace, go, goBack, goForward } = routeActions
@@ -359,29 +365,40 @@ module.exports = function createTests(createHistory, name, reset = defaultReset)
           action: 'REPLACE'
         })
 
-        store.dispatch(go(-1))
-        expect(store).toContainLocation({
-          pathname: '/',
-          action: 'POP'
-        })
+        if (supportsGoWithoutReloadUsingHash()) {
 
-        store.dispatch(goForward())
-        expect(store).toContainLocation({
-          pathname: '/bar',
-          state: { bar: 'foo' },
-          action: 'POP'
-        })
+          store.dispatch(go(-1))
+          expect(store).toContainLocation({
+            pathname: '/',
+            action: 'POP'
+          })
 
-        store.dispatch(goBack())
-        expect(store).toContainLocation({
-          pathname: '/',
-          action: 'POP'
-        })
+          store.dispatch(goForward())
+          expect(store).toContainLocation({
+            pathname: '/bar',
+            state: { bar: 'foo' },
+            action: 'POP'
+          })
+
+          store.dispatch(goBack())
+          expect(store).toContainLocation({
+            pathname: '/',
+            action: 'POP'
+          })
+
+          store.dispatch(replace({ pathname: '/bar', state: { bar: 'foo' } }))
+          expect(store).toContainLocation({
+            pathname: '/bar',
+            state: { bar: 'foo' },
+            action: 'REPLACE'
+          })
+
+        }
 
         store.dispatch(push('/bar'))
         expect(store).toContainLocation({
           pathname: '/bar',
-          action: 'PUSH'
+          action: 'REPLACE'
         })
 
         store.dispatch(push('/bar?query=1'))
