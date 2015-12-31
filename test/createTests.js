@@ -359,10 +359,29 @@ module.exports = function createTests(createHistory, name, reset = defaultReset)
           action: 'REPLACE'
         })
 
+        store.dispatch(go(-1))
+        expect(store).toContainLocation({
+          pathname: '/',
+          action: 'POP'
+        })
+
+        store.dispatch(goForward())
+        expect(store).toContainLocation({
+          pathname: '/bar',
+          state: { bar: 'foo' },
+          action: 'POP'
+        })
+
+        store.dispatch(goBack())
+        expect(store).toContainLocation({
+          pathname: '/',
+          action: 'POP'
+        })
+
         store.dispatch(push('/bar'))
         expect(store).toContainLocation({
           pathname: '/bar',
-          action: 'REPLACE' // Converted by history.
+          action: 'PUSH'
         })
 
         store.dispatch(push('/bar?query=1'))
